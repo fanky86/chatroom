@@ -1,7 +1,9 @@
 const WebSocket = require('ws');
+const fs = require('fs');
 
 let wss;
-const badWords = ['kontol', 'asu', 'bangke', 'puqi', 'kntl' , 'bokep','bajingan','anjing','tolol','goblok','coli'];  // Daftar kata kotor
+const badWords = ['bokep', 'anjing', 'kontol', 'tolol']; // Daftar kata kotor
+const messagesFile = './messages.json'; // Lokasi penyimpanan pesan
 
 // Fungsi untuk menyensor pesan
 function censorMessage(message) {
@@ -13,27 +15,53 @@ function censorMessage(message) {
     return censoredMessage;
 }
 
+// Fungsi untuk membaca pesan dari file
+function loadMessages() {
+    if (fs.existsSync(messagesFile)) {
+        const data = fs.readFileSync(messagesFile);
+        return JSON.parse(data);
+    }
+    return [];
+}
+
+// Fungsi untuk menyimpan pesan ke file
+function saveMessages(messages) {
+    fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
+}
+
+// Memuat pesan saat server dimulai
+let messages = loadMessages();
+
 module.exports = (req, res) => {
   if (!wss) {
     wss = new WebSocket.Server({ noServer: true });
 
     wss.on('connection', (ws) => {
+      // Kirim riwayat pesan ke klien baru
+      ws.send(JSON.stringify({ type: 'history', messages }));
+
       ws.on('message', (message) => {
         const data = JSON.parse(message);
 
         if (data.type === 'join') {
-          // Memberitahukan klien lain bahwa pengguna baru bergabung
+          // Beritahu klien lain bahwa pengguna baru bergabung
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({ type: 'join', username: data.username }));
             }
           });
         } else if (data.type === 'message') {
-          // Menyensor pesan sebelum mengirim
+          // Saring pesan sebelum menyimpan dan mengirim
           const censoredMessage = censorMessage(data.message);
-          // Mengirim pesan yang sudah disensor ke semua klien
+          const newMessage = { username: data.username, message: censoredMessage };
+
+          // Simpan pesan
+          messages.push(newMessage);
+          saveMessages(messages);
+
+          // Kirim pesan ke semua klien
           wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
+            if (client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({ type: 'message', username: data.username, message: censoredMessage }));
             }
           });
