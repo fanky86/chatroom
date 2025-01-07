@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatroom by fanky</title>
+    <title>Chatroom yang Menarik</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="login">
-        <input type="text" id="username" placeholder="Masukkan nama Anda" />
+        <h2>Selamat Datang di Chatroom</h2>
+        <p>Masukkan nama Anda untuk bergabung</p>
+        <input type="text" id="username" placeholder="Nama Anda" />
         <button id="joinButton">Gabung</button>
     </div>
 
     <div id="chatbox" style="display: none;">
         <div id="messages"></div>
-        <input type="text" id="message" placeholder="Tulis pesan..." />
-        <button id="sendButton">Kirim</button>
+        <div id="input-area">
+            <input type="text" id="message" placeholder="Tulis pesan..." />
+            <button id="sendButton">Kirim</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
