@@ -1,5 +1,5 @@
 // Daftar kata-kata kotor
-const badWords = ['kontol', 'asu', 'bangke', 'puqi', 'kntl' , 'bokep','bajingan','anjing','tolol','goblok','coli'];  // Ganti dengan kata-kata yang sesuai
+const badWords = ['kata1', 'kata2', 'kata3', 'kata4']; // Ganti dengan kata-kata yang sesuai
 
 // Menghubungkan ke WebSocket server
 const socket = new WebSocket('ws://localhost:8080');
@@ -12,6 +12,14 @@ const joinButton = document.getElementById('joinButton');
 const messageInput = document.getElementById('message');
 const sendButton = document.getElementById('sendButton');
 const messagesDiv = document.getElementById('messages');
+
+// Fungsi untuk menambahkan pesan ke chatbox
+function appendMessage(username, message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${username}: ${message}`;
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
 
 // Fungsi untuk memfilter kata-kata kotor
 function censorMessage(message) {
@@ -33,20 +41,12 @@ joinButton.addEventListener('click', () => {
     }
 });
 
-// Fungsi untuk menambahkan pesan ke chatbox
-function appendMessage(username, message) {
-    const messageElement = document.createElement('div');
-    messageElement.textContent = `${username}: ${message}`;
-    messagesDiv.appendChild(messageElement);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
 // Kirim pesan ke WebSocket server ketika tombol kirim diklik
 sendButton.addEventListener('click', () => {
     let message = messageInput.value;
     if (message) {
         const username = usernameInput.value.trim();
-        // Censor pesan sebelum mengirim
+        // Saring pesan sebelum mengirim
         const censoredMessage = censorMessage(message);
         socket.send(JSON.stringify({ type: 'message', username, message: censoredMessage }));
         appendMessage(username, censoredMessage);
@@ -57,7 +57,13 @@ sendButton.addEventListener('click', () => {
 // Menampilkan pesan yang diterima dari server
 socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
-    if (data.type === 'message') {
+
+    if (data.type === 'history') {
+        // Tampilkan riwayat pesan
+        data.messages.forEach((msg) => {
+            appendMessage(msg.username, msg.message);
+        });
+    } else if (data.type === 'message') {
         appendMessage(data.username, data.message);
     } else if (data.type === 'join') {
         appendMessage('Server', `${data.username} telah bergabung.`);
