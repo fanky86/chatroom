@@ -1,8 +1,5 @@
-// Daftar kata-kata kotor
-const badWords = ['kontol', 'bokep', 'anjing', 'tolol']; // Ganti dengan kata-kata yang sesuai
-
-// Menghubungkan ke WebSocket server
-const socket = new WebSocket('ws://localhost:8080');
+// Daftar kata-kata kotor untuk disensor
+const badWords = ['bokep', 'anjing', 'tolol', 'asu']; // Ganti dengan kata-kata yang sesuai
 
 // DOM elements
 const loginDiv = document.getElementById('login');
@@ -13,28 +10,32 @@ const messageInput = document.getElementById('message');
 const sendButton = document.getElementById('sendButton');
 const messagesDiv = document.getElementById('messages');
 
-// Fungsi untuk menambahkan pesan ke chatbox
-function appendMessage(username, message) {
-    const messageElement = document.createElement('div');
-    messageElement.textContent = `${username}: ${message}`;
-    messagesDiv.appendChild(messageElement);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+let currentUsername = ''; // Untuk menyimpan nama pengguna
 
-// Fungsi untuk memfilter kata-kata kotor
+// Fungsi untuk menyensor pesan
 function censorMessage(message) {
     let censoredMessage = message;
     badWords.forEach((badWord) => {
-        const regex = new RegExp(badWord, 'gi'); // Case-insensitive
+        const regex = new RegExp(`\\b${badWord}\\b`, 'gi'); // Hanya kata lengkap
         censoredMessage = censoredMessage.replace(regex, '*'.repeat(badWord.length));
     });
     return censoredMessage;
+}
+
+// Fungsi untuk menambahkan pesan ke chatbox
+function appendMessage(username, message, type = 'other') {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = `${username}: ${message}`;
+    messageElement.classList.add('message', type);
+    messagesDiv.appendChild(messageElement);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll otomatis ke bawah
 }
 
 // Menyembunyikan login dan menampilkan chatroom
 joinButton.addEventListener('click', () => {
     const username = usernameInput.value.trim();
     if (username) {
+        currentUsername = username;
         socket.send(JSON.stringify({ type: 'join', username }));
         loginDiv.style.display = 'none';
         chatboxDiv.style.display = 'flex';
@@ -43,29 +44,29 @@ joinButton.addEventListener('click', () => {
 
 // Kirim pesan ke WebSocket server ketika tombol kirim diklik
 sendButton.addEventListener('click', () => {
-    let message = messageInput.value;
+    const message = messageInput.value.trim();
     if (message) {
-        const username = usernameInput.value.trim();
-        // Saring pesan sebelum mengirim
-        const censoredMessage = censorMessage(message);
-        socket.send(JSON.stringify({ type: 'message', username, message: censoredMessage }));
-        appendMessage(username, censoredMessage);
+        const censoredMessage = censorMessage(message); // Sensor pesan sebelum dikirim
+        socket.send(JSON.stringify({ type: 'message', username: currentUsername, message: censoredMessage }));
+        appendMessage('Anda', censoredMessage, 'user'); // Pesan milik pengguna
         messageInput.value = '';
     }
 });
 
-// Menampilkan pesan yang diterima dari server
+// Tampilkan pesan yang diterima dari server
 socket.addEventListener('message', (event) => {
     const data = JSON.parse(event.data);
 
     if (data.type === 'history') {
         // Tampilkan riwayat pesan
         data.messages.forEach((msg) => {
-            appendMessage(msg.username, msg.message);
+            const type = msg.username === currentUsername ? 'user' : 'other';
+            appendMessage(msg.username, msg.message, type);
         });
     } else if (data.type === 'message') {
-        appendMessage(data.username, data.message);
+        const type = data.username === currentUsername ? 'user' : 'other';
+        appendMessage(data.username, data.message, type);
     } else if (data.type === 'join') {
-        appendMessage('Server', `${data.username} telah bergabung.`);
+        appendMessage('Server', `${data.username} telah bergabung.`, 'server');
     }
 });
