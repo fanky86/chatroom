@@ -1,19 +1,7 @@
-// Inisialisasi WebSocket
-const socket = new WebSocket('wss://chatroom-viper404.vercel.app'); // Ganti dengan URL server WebSocket Anda
+// Koneksi WebSocket
+const socket = new WebSocket('ws://localhost:8080'); // Ganti URL jika server Anda di-host online
 
-socket.addEventListener('open', () => {
-    console.log('WebSocket terhubung.');
-});
-
-socket.addEventListener('error', (error) => {
-    console.error('WebSocket error:', error);
-});
-
-socket.addEventListener('close', () => {
-    console.log('WebSocket terputus.');
-});
-
-// DOM elements
+// Elemen DOM
 const loginDiv = document.getElementById('login');
 const chatboxDiv = document.getElementById('chatbox');
 const usernameInput = document.getElementById('username');
@@ -22,18 +10,7 @@ const messageInput = document.getElementById('message');
 const sendButton = document.getElementById('sendButton');
 const messagesDiv = document.getElementById('messages');
 
-let currentUsername = ''; // Untuk menyimpan nama pengguna
-
-// Fungsi untuk menyensor pesan
-const badWords = ['bokep', 'anjing', 'asu']; // Ganti dengan kata-kata kotor
-function censorMessage(message) {
-    let censoredMessage = message;
-    badWords.forEach((badWord) => {
-        const regex = new RegExp(`\\b${badWord}\\b`, 'gi');
-        censoredMessage = censoredMessage.replace(regex, '*'.repeat(badWord.length));
-    });
-    return censoredMessage;
-}
+let currentUsername = '';
 
 // Fungsi untuk menambahkan pesan ke chatbox
 function appendMessage(username, message, type = 'other') {
@@ -44,11 +21,21 @@ function appendMessage(username, message, type = 'other') {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Event listener untuk tombol "Gabung"
+// Fungsi untuk menyensor kata-kata kasar
+const badWords = ['kata1', 'kata2', 'kata3']; // Ganti dengan daftar kata-kata kotor
+function censorMessage(message) {
+    let censoredMessage = message;
+    badWords.forEach((badWord) => {
+        const regex = new RegExp(`\\b${badWord}\\b`, 'gi');
+        censoredMessage = censoredMessage.replace(regex, '*'.repeat(badWord.length));
+    });
+    return censoredMessage;
+}
+
+// Event ketika tombol "Gabung" diklik
 joinButton.addEventListener('click', () => {
     const username = usernameInput.value.trim();
     if (username) {
-        console.log(`Username: ${username}`); // Debugging log
         currentUsername = username;
         socket.send(JSON.stringify({ type: 'join', username }));
         loginDiv.style.display = 'none';
@@ -58,7 +45,7 @@ joinButton.addEventListener('click', () => {
     }
 });
 
-// Kirim pesan ke server ketika tombol "Kirim" diklik
+// Event ketika tombol "Kirim" diklik
 sendButton.addEventListener('click', () => {
     const message = messageInput.value.trim();
     if (message) {
@@ -69,20 +56,14 @@ sendButton.addEventListener('click', () => {
     }
 });
 
-// Tampilkan pesan yang diterima dari server
+// Event ketika pesan diterima dari server
 socket.addEventListener('message', (event) => {
-    console.log('Pesan diterima:', event.data); // Debugging log
     const data = JSON.parse(event.data);
 
-    if (data.type === 'history') {
-        data.messages.forEach((msg) => {
-            const type = msg.username === currentUsername ? 'user' : 'other';
-            appendMessage(msg.username, msg.message, type);
-        });
+    if (data.type === 'join') {
+        appendMessage('Server', `${data.username} telah bergabung.`, 'server');
     } else if (data.type === 'message') {
         const type = data.username === currentUsername ? 'user' : 'other';
         appendMessage(data.username, data.message, type);
-    } else if (data.type === 'join') {
-        appendMessage('Server', `${data.username} telah bergabung.`, 'server');
     }
 });
