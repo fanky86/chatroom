@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
 let wss;
-const badWords = ['kata1', 'kata2', 'kata3', 'kata4'];  // Daftar kata kotor
+const badWords = ['kontol', 'asu', 'bangke', 'puqi', 'kntl' , 'bokep','bajingan','anjing','tolol','goblok','coli'];  // Daftar kata kotor
 
 // Fungsi untuk menyensor pesan
 function censorMessage(message) {
