@@ -1,6 +1,6 @@
 const { WebSocketServer } = require('ws');
 
-const wss = new WebSocketServer({ port: 8080 }); // Ganti dengan port sesuai kebutuhan Anda
+const socket = new WebSocket('wss://chatroom-viper404.vercel.app/api/ws'); // Ganti dengan port sesuai kebutuhan Anda
 
 // Fungsi untuk broadcast pesan ke semua klien
 function broadcast(data) {
