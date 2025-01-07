@@ -1,5 +1,17 @@
-// Daftar kata-kata kotor untuk disensor
-const badWords = ['bokep', 'anjing', 'tolol', 'asu']; // Ganti dengan kata-kata yang sesuai
+// Inisialisasi WebSocket
+const socket = new WebSocket('wss://chatroom-viper404.vercel.app'); // Ganti dengan URL server WebSocket Anda
+
+socket.addEventListener('open', () => {
+    console.log('WebSocket terhubung.');
+});
+
+socket.addEventListener('error', (error) => {
+    console.error('WebSocket error:', error);
+});
+
+socket.addEventListener('close', () => {
+    console.log('WebSocket terputus.');
+});
 
 // DOM elements
 const loginDiv = document.getElementById('login');
@@ -13,10 +25,11 @@ const messagesDiv = document.getElementById('messages');
 let currentUsername = ''; // Untuk menyimpan nama pengguna
 
 // Fungsi untuk menyensor pesan
+const badWords = ['bokep', 'anjing', 'asu']; // Ganti dengan kata-kata kotor
 function censorMessage(message) {
     let censoredMessage = message;
     badWords.forEach((badWord) => {
-        const regex = new RegExp(`\\b${badWord}\\b`, 'gi'); // Hanya kata lengkap
+        const regex = new RegExp(`\\b${badWord}\\b`, 'gi');
         censoredMessage = censoredMessage.replace(regex, '*'.repeat(badWord.length));
     });
     return censoredMessage;
@@ -28,37 +41,40 @@ function appendMessage(username, message, type = 'other') {
     messageElement.textContent = `${username}: ${message}`;
     messageElement.classList.add('message', type);
     messagesDiv.appendChild(messageElement);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll otomatis ke bawah
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Menyembunyikan login dan menampilkan chatroom
+// Event listener untuk tombol "Gabung"
 joinButton.addEventListener('click', () => {
     const username = usernameInput.value.trim();
     if (username) {
+        console.log(`Username: ${username}`); // Debugging log
         currentUsername = username;
         socket.send(JSON.stringify({ type: 'join', username }));
         loginDiv.style.display = 'none';
         chatboxDiv.style.display = 'flex';
+    } else {
+        alert('Nama pengguna tidak boleh kosong!');
     }
 });
 
-// Kirim pesan ke WebSocket server ketika tombol kirim diklik
+// Kirim pesan ke server ketika tombol "Kirim" diklik
 sendButton.addEventListener('click', () => {
     const message = messageInput.value.trim();
     if (message) {
-        const censoredMessage = censorMessage(message); // Sensor pesan sebelum dikirim
+        const censoredMessage = censorMessage(message);
         socket.send(JSON.stringify({ type: 'message', username: currentUsername, message: censoredMessage }));
-        appendMessage('Anda', censoredMessage, 'user'); // Pesan milik pengguna
+        appendMessage('Anda', censoredMessage, 'user');
         messageInput.value = '';
     }
 });
 
 // Tampilkan pesan yang diterima dari server
 socket.addEventListener('message', (event) => {
+    console.log('Pesan diterima:', event.data); // Debugging log
     const data = JSON.parse(event.data);
 
     if (data.type === 'history') {
-        // Tampilkan riwayat pesan
         data.messages.forEach((msg) => {
             const type = msg.username === currentUsername ? 'user' : 'other';
             appendMessage(msg.username, msg.message, type);
