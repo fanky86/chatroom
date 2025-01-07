@@ -1,5 +1,5 @@
 // Daftar kata-kata kotor
-const badWords = ['kata1', 'kata2', 'kata3', 'kata4'];  // Ganti dengan kata-kata yang sesuai
+const badWords = ['kontol', 'asu', 'bangke', 'puqi', 'kntl' , 'bokep','bajingan','anjing','tolol','goblok','coli'];  // Ganti dengan kata-kata yang sesuai
 
 // Menghubungkan ke WebSocket server
 const socket = new WebSocket('ws://localhost:8080');
