@@ -1,5 +1,5 @@
 // Koneksi WebSocket
-const socket = new WebSocket('ws://localhost:8080'); // Ganti URL jika server Anda di-host online
+const socket = new WebSocket('wss://chatroom-viper404.vercel.app/api/ws'); // Ganti URL jika server Anda di-host online
 
 // Elemen DOM
 const loginDiv = document.getElementById('login');
